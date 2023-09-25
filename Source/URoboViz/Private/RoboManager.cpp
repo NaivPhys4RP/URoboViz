@@ -1,11 +1,9 @@
 // Copyright (c) 2022, Hoang Giang Nguyen - Institute for Artificial Intelligence, University Bremen
 
 #include "RoboManager.h"
-
 #include "Animation/SkeletalMeshActor.h"
 #include "Conversions.h"
 #include "ObjectController.h"
-#include "StateManager.h"
 #include "mujoco_msgs/ObjectState.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogRoboManager, Log, All);
@@ -17,8 +15,6 @@ ARoboManager::ARoboManager()
 	PrimaryActorTick.bCanEverTick = true;
 
 	ObjectController = CreateDefaultSubobject<UObjectController>(TEXT("ObjectController"));
-
-	StateManager = CreateDefaultSubobject<UStateManager>(TEXT("StateManager"));
 }
 
 // Called when the game starts or when spawned
@@ -33,8 +29,6 @@ void ARoboManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	ROSManager.Deinit();
 
-	StateManager->Deinit();
-
 	Super::EndPlay(EndPlayReason);
 }
 
@@ -43,7 +37,7 @@ void ARoboManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	for (TPair<ASkeletalMeshActor *, FRoboManagerContainer> &Robot : RobotManager)
+	for (TPair<ASkeletalMeshActor *, FRoboManagerContainer> Robot : RobotManager)
 	{
 		if (Robot.Key == nullptr)
 		{
@@ -54,14 +48,12 @@ void ARoboManager::Tick(float DeltaTime)
 
 	ROSManager.Tick();
 
-	StateManager->Tick();
-
 	ObjectController->Tick(DeltaTime);
 }
 
 void ARoboManager::Init()
 {
-	for (TPair<ASkeletalMeshActor *, FRoboManagerContainer> &Robot : RobotManager)
+	for (TPair<ASkeletalMeshActor *, FRoboManagerContainer> Robot : RobotManager)
 	{
 		if (Robot.Key == nullptr)
 		{
@@ -71,8 +63,6 @@ void ARoboManager::Init()
 	}
 
 	ROSManager.Init();
-
-	StateManager->Init();
 }
 
 URobotController *ARoboManager::GetController(const FString &ControllerName) const

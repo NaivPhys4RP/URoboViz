@@ -1,7 +1,6 @@
 // Copyright (c) 2022, Hoang Giang Nguyen - Institute for Artificial Intelligence, University Bremen
 
 #include "ROSManagerContainer.h"
-
 #include "ROS/Publisher/ROSPublisher.h"
 #include "ROS/Service/Client/ROSServiceClient.h"
 #include "ROS/Service/Server/ROSServiceServer.h"
@@ -9,13 +8,18 @@
 
 void FROSManagerContainer::Init()
 {
+	Handler = MakeShareable<FROSBridgeHandler>(new FROSBridgeHandler(Host, Port));
+
+	// Connect to ROSBridge Websocket server
+  Handler->Connect();
+
 	for (UROSPublisher *ROSPublisher : ROSPublishers)
 	{
 		if (ROSPublisher == nullptr)
 		{
 			continue;
 		}
-		ROSPublisher->Connect(Host, Port);
+		ROSPublisher->Connect(Handler);
 	}
 	for (UROSSubscriber *ROSSubscriber : ROSSubscribers)
 	{
@@ -31,7 +35,7 @@ void FROSManagerContainer::Init()
 		{
 			continue;
 		}
-		ROSServiceServer->Connect(Host, Port);
+		ROSServiceServer->Connect(Handler);
 	}
 	for (UROSServiceClient *ROSServiceClient : ROSServiceClients)
 	{
@@ -80,7 +84,12 @@ void FROSManagerContainer::Deinit()
 }
 
 void FROSManagerContainer::Tick()
-{	
+{
+	if (Handler.IsValid())
+	{
+		Handler->Process();
+	}
+	
 	for (UROSPublisher *ROSPublisher : ROSPublishers)
 	{
 		if (ROSPublisher == nullptr)

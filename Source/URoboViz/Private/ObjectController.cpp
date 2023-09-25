@@ -1,7 +1,6 @@
 // Copyright (c) 2022, Hoang Giang Nguyen - Institute for Artificial Intelligence, University Bremen
 
 #include "ObjectController.h"
-
 #include "Animation/SkeletalMeshActor.h"
 #include "Async/Async.h"
 #include "Controllers/JointController.h"
@@ -42,15 +41,7 @@ UObjectController::UObjectController()
 			{FLinearColor(0.5, 0, 1, 1), TEXT("Purple")},
 			{FLinearColor(1, 0, 0, 1), TEXT("Red")},
 			{FLinearColor(1, 1, 0, 1), TEXT("Yellow")},
-			{FLinearColor(0.8, 0.1, 0, 1), TEXT("Orange")},
-			{FLinearColor(0.1, 0.1, 0.1, 1), TEXT("Gray")}};
-	
-}
-
-UMaterial *UObjectController::GetMaterial(const FLinearColor &Color) const
-{
-	const FString ColorName = TEXT("M_") + ColorMap[Color];
-	return Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, *(TEXT("StaticMesh'/URoboViz/Assets/Materials/") + ColorName + TEXT(".") + ColorName + TEXT("'"))));
+			{FLinearColor(0.8, 0.1, 0, 1), TEXT("Orange")}};
 }
 
 void UObjectController::Tick(float DeltaTime)
@@ -144,6 +135,7 @@ AActor *UObjectController::GetObjectInMujoco(const FString &ObjectName) const
 			return Object;
 		}
 	}
+	UE_LOG(LogObjectController, Warning, TEXT("%s not found, try to capitalize first letter"), *ObjectName)
 	return nullptr;
 }
 
@@ -224,7 +216,7 @@ void UObjectController::SpawnObjectInUnreal(const mujoco_msgs::ObjectStatus &Obj
 	AsyncTask(ENamedThreads::GameThread, [ObjectStatus, bAddObjectInMujoco, this]()
 						{
 							FString ObjectName = ObjectStatus.GetInfo().GetName();
-							FTransform Transform = GetTransform(ObjectStatus);
+							const FTransform Transform = GetTransform(ObjectStatus);
 
 							FActorSpawnParameters SpawnParameters;
 							SpawnParameters.Name = FName(ObjectName);
@@ -262,16 +254,11 @@ void UObjectController::SpawnObjectInUnreal(const mujoco_msgs::ObjectStatus &Obj
 									return;
 								}
 							}
-							else
-							{
-								Transform = Transform.GetScaled(2.f);
-							}
-							FConversions::ROSToU(Transform);
 
 							AActor *Object = nullptr;
 							if (ActorClass == AStaticMeshActor::StaticClass())
 							{
-								Object = GetWorld()->SpawnActor<AStaticMeshActor>(ActorClass, Transform, SpawnParameters);
+								Object = GetWorld()->SpawnActor<AStaticMeshActor>(ActorClass, FConversions::ROSToU(Transform), SpawnParameters);
 								UStaticMeshComponent *StaticMeshComponent = Cast<AStaticMeshActor>(Object)->GetStaticMeshComponent();
 
 								StaticMeshComponent->UnregisterComponent();
@@ -297,11 +284,6 @@ void UObjectController::SpawnObjectInUnreal(const mujoco_msgs::ObjectStatus &Obj
 									break;
 								}
 
-								if (StaticMesh == nullptr)
-								{
-									StaticMesh = Cast<UStaticMesh>(StaticLoadObject(UStaticMesh::StaticClass(), nullptr, *MeshPath));
-								}
-
 								if (StaticMesh != nullptr)
 								{
 									StaticMeshComponent->SetStaticMesh(StaticMesh);
@@ -310,7 +292,8 @@ void UObjectController::SpawnObjectInUnreal(const mujoco_msgs::ObjectStatus &Obj
 										const FVector4 Color = ObjectStatus.GetInfo().GetColor().GetColor();
 										if (!Color.Equals(FVector4()) && ColorMap.Find(FLinearColor(Color)))
 										{
-											UMaterial *Material = GetMaterial(FLinearColor(Color));
+											FString ColorName = TEXT("M_") + ColorMap[FLinearColor(Color)];
+											UMaterial *Material = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, *(TEXT("StaticMesh'/URoboViz/Assets/Materials/") + ColorName + TEXT(".") + ColorName + TEXT("'"))));
 											for (int32 i = 0; i < StaticMeshComponent->GetMaterials().Num(); i++)
 											{
 												StaticMeshComponent->SetMaterial(i, Material);
@@ -318,14 +301,9 @@ void UObjectController::SpawnObjectInUnreal(const mujoco_msgs::ObjectStatus &Obj
 										}
 									}
 								}
-
-								StaticMeshComponent->SetMassOverrideInKg(NAME_None, ObjectStatus.GetInfo().GetInertial().GetM(), true);
-								StaticMeshComponent->SetCenterOfMass(ObjectStatus.GetInfo().GetInertial().GetCom().GetVector(), NAME_None);
-
 								if (ObjectStatus.GetInfo().GetMovable())
 								{
 									StaticMeshComponent->SetMobility(EComponentMobility::Movable);
-									StaticMeshComponent->SetEnableGravity(!bAddObjectInMujoco);
 									StaticMeshComponent->SetSimulatePhysics(!bAddObjectInMujoco);
 								}
 								else
@@ -340,7 +318,7 @@ void UObjectController::SpawnObjectInUnreal(const mujoco_msgs::ObjectStatus &Obj
 							}
 							else if (ActorClass == ASkeletalMeshActor::StaticClass())
 							{
-								Object = GetWorld()->SpawnActor<ASkeletalMeshActor>(ActorClass, Transform, SpawnParameters);
+								Object = GetWorld()->SpawnActor<ASkeletalMeshActor>(ActorClass, FConversions::ROSToU(Transform), SpawnParameters);
 								USkeletalMeshComponent *SkeletalMeshComponent = Cast<ASkeletalMeshActor>(Object)->GetSkeletalMeshComponent();
 
 								SkeletalMeshComponent->UnregisterComponent();
@@ -351,7 +329,8 @@ void UObjectController::SpawnObjectInUnreal(const mujoco_msgs::ObjectStatus &Obj
 									const FVector4 Color = ObjectStatus.GetInfo().GetColor().GetColor();
 									if (!Color.Equals(FVector4()) && ColorMap.Find(FLinearColor(Color)))
 									{
-										UMaterial *Material = GetMaterial(FLinearColor(Color));
+										FString ColorName = TEXT("M_") + ColorMap[FLinearColor(ObjectStatus.GetInfo().GetColor().GetColor())];
+										UMaterial *Material = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, *(TEXT("StaticMesh'/URoboViz/Assets/Materials/") + ColorName + TEXT(".") + ColorName + TEXT("'"))));
 										for (int32 i = 0; i < SkeletalMeshComponent->GetMaterials().Num(); i++)
 										{
 											SkeletalMeshComponent->SetMaterial(i, Material);

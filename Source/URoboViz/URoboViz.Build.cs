@@ -17,14 +17,12 @@ public class URoboViz : ModuleRules
       { "Core",
         "CoreUObject",
         "Engine",
-        "Projects",
         "InputCore",
         "UROSBridge",
         "Json",
         "JsonUtilities",
         "UConversions",
-        "AnimGraphRuntime",
-        "ZMQLibrary"
+        "AnimGraphRuntime"
       }
       );
 

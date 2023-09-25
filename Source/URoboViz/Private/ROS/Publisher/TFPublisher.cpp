@@ -1,7 +1,6 @@
 // Copyright (c) 2022, Hoang Giang Nguyen - Institute for Artificial Intelligence, University Bremen
 
 #include "ROS/Publisher/TFPublisher.h"
-
 #include "Conversions.h"
 #include "Engine/StaticMeshActor.h"
 #include "Kismet/GameplayStatics.h"
@@ -50,6 +49,7 @@ void UTFPublisher::Publish()
   }
 
   Handler->PublishMsg(CommonPublisherParameters.Topic, TfMessage);
+  Handler->Process();
 
   Seq++;
 }

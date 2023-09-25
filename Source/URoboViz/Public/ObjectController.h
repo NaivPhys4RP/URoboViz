@@ -53,8 +53,6 @@ public:
 
 	void SetDesiredObjectJointPositionFromROS(const FString &Objectname, const FString &JointName, const float DesiredObjectJointPosition);
 
-	UMaterial *GetMaterial(const FLinearColor &Color) const;
-
 public:
 	UPROPERTY(EditAnywhere)
 	bool bShowLinearVelocity;
@@ -72,9 +70,8 @@ private:
 	UPROPERTY(EditAnywhere)
 	TMap<FString, TSubclassOf<UAnimInstance>> RoboAnims;
 
-	UPROPERTY(EditAnywhere)
+private:
 	TMap<FLinearColor, FString> ColorMap;
 
-private:
 	TMap<FString, TMap<FString, struct FJoint>> DesiredObjectJointPositions;
 };

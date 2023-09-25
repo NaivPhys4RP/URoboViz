@@ -1,10 +1,16 @@
 // Copyright (c) 2022, Hoang Giang Nguyen - Institute for Artificial Intelligence, University Bremen
 
 #include "ROS/ROSBase.h"
-
 #include "RoboManager.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogROSBase, Log, All);
+
+void UROSBase::Connect(const TSharedPtr<FROSBridgeHandler> &InHandler)
+{
+  Handler = InHandler;
+
+  Init();
+}
 
 void UROSBase::Connect(const FString &Host, const int32 Port)
 {

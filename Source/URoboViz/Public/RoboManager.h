@@ -11,8 +11,6 @@
 
 class UObjectController;
 
-class UStateManager;
-
 UCLASS()
 class UROBOVIZ_API ARoboManager : public AActor
 {
@@ -34,24 +32,21 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 public:
-	class URobotController *GetController(const FString &ControllerName) const;
+	URobotController *GetController(const FString &ControllerName) const;
 
-	class USensor *GetSensor(const FString &SensorName) const;
+	USensor *GetSensor(const FString &SensorName) const;
 
 	UObjectController *GetObjectController() const { return ObjectController; }
 
 private:
 	void Init();
 
-private:
+public:
 	UPROPERTY(EditAnywhere, Category = "Robot Manager")
-	TMap<class ASkeletalMeshActor *, FRoboManagerContainer> RobotManager;
+	TMap<ASkeletalMeshActor *, FRoboManagerContainer> RobotManager;
 
 	UPROPERTY(EditAnywhere, Category = "ROS Manager")
 	FROSManagerContainer ROSManager;
-
-	UPROPERTY(VisibleAnywhere, Category = "ZMQ Manager")
-	UStateManager *StateManager;
 
 	UPROPERTY(VisibleAnywhere, Category = "Object Controller")
 	UObjectController *ObjectController;

@@ -1,7 +1,6 @@
 // Copyright (c) 2022, Hoang Giang Nguyen - Institute for Artificial Intelligence, University Bremen
 
 #include "ROS/Service/Client/SpawnObjectClient.h"
-
 #include "Animation/SkeletalMeshActor.h"
 #include "Conversions.h"
 #include "Engine/StaticMeshActor.h"
@@ -134,11 +133,11 @@ void USpawnObjectClient::Tick()
         {
           const FVector ObjectLocation = StaticMeshObject->GetActorLocation();
           const FRotator ObjectRotator = StaticMeshObject->GetActorRotation();
-          StaticMeshObject->SetActorLocationAndRotation(FVector(1000.f, 0.f, 0.f), FRotator());                 // Move the object to somewhere that doesn't collide to anything
-          ObjectInfo.SetSize(FConversions::CmToM(StaticMeshObject->GetComponentsBoundingBox().GetSize() / 2));  // Change the size
-          StaticMeshObject->SetActorLocationAndRotation(ObjectLocation, ObjectRotator);                         // Move the object back
+          StaticMeshObject->SetActorLocationAndRotation(FVector(1000.f, 0.f, 0.f), FRotator()); // Move the object to somewhere that doesn't collide to anything
+          ObjectInfo.SetSize(FConversions::CmToM(StaticMeshObject->GetComponentsBoundingBox().GetSize() / 2));
+          StaticMeshObject->SetActorLocationAndRotation(ObjectLocation, ObjectRotator);
         }
-        else if (ObjectInfo.GetType() != mujoco_msgs::ObjectInfo::MESH)
+        else
         {
           ObjectInfo.SetSize(StaticMeshObject->GetActorScale3D() / 2);
         }
@@ -147,10 +146,6 @@ void USpawnObjectClient::Tick()
         if (StaticMeshObject->GetStaticMeshComponent()->GetMaterial(0) != nullptr)
         {
           StaticMeshObject->GetStaticMeshComponent()->GetMaterial(0)->GetVectorParameterValue(TEXT("BaseColor"), Color);
-        }
-        else
-        {
-          UE_LOG(LogSpawnObjectClient, Warning, TEXT("%s has no material"), *StaticMeshObject->GetStaticMeshComponent()->GetName())
         }
         ObjectInfo.SetColor(std_msgs::ColorRGBA(Color.R, Color.G, Color.B, Color.A));
         geometry_msgs::Inertia Inertial;
@@ -165,7 +160,6 @@ void USpawnObjectClient::Tick()
         ObjectInfo.SetInertial(Inertial);
         FString Mesh = StaticMeshObject->GetStaticMeshComponent()->GetStaticMesh()->GetName();
         Mesh.RemoveFromStart(TEXT("SM_"));
-        Mesh += TEXT(".xml");
         ObjectInfo.SetMesh(Mesh);
         ObjectStatus.SetInfo(ObjectInfo);
 
@@ -200,10 +194,7 @@ void USpawnObjectClient::OnBeginOverlap(AActor *OverlappedActor, AActor *OtherAc
 {
   if (AStaticMeshActor *const Object = Cast<AStaticMeshActor>(OtherActor))
   {
-    if (!GetRoboManager()->GetObjectController()->GetObjectInMujoco(Object->GetName()))
-    {
-      ObjectsToSpawnInMujoco.Add(Object);
-    }
+    ObjectsToSpawnInMujoco.Add(Object);
   }
 }
 
